@@ -108,13 +108,6 @@ After cleanup, one rule applies everywhere:
 
 ---
 
-## Archive (`!old/`)
-
-**What:** Superseded filenames (`protodepth_20_1a`, `bal_mon_mexc_*`, `mexc_depth_*`, August 2025 backup snapshot).  
-**Why:** Git history of the bordelik — reference only, not daily drivers. Mapping in private repo `!old/README.md`.
-
----
-
 ## How it is run
 
 ```bash
@@ -145,7 +138,7 @@ Same protobuf *idea* appears in multiple repos; **useful-scripts** is the cleane
 
 | Date | Change |
 |------|--------|
-| 2026-06 | Renamed scripts (`mexc_*`, `gate_*`, `util_*`), merged duplicate protos, `mexc_api_schema_from_github/` + single `generated_proto/`, synced WSL↔SOL, first GitHub publish |
+| 2026-06 | Renamed scripts (`mexc_*`, `gate_*`, `util_*`), merged duplicate protos, `mexc_api_schema_from_github/` + single `generated_proto/`, synced WSL↔SOL, GitHub publish, removed legacy archive copies |
 
 ---
 
