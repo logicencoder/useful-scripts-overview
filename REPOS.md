@@ -1,8 +1,6 @@
-# useful-scripts — repository pair
+# Related repositories
 
-| Repo | Visibility | Contents |
-|------|------------|----------|
-| [useful-scripts](https://github.com/logicencoder/useful-scripts) | Private | Active scripts, `generated_proto/`, GitHub schema folder |
-| [useful-scripts-overview](https://github.com/logicencoder/useful-scripts-overview) | Public | This README — feature map, no secrets |
-
-https://logicencoder.com
+| Repository | Visibility | Role |
+|------------|------------|------|
+| [useful-scripts](https://github.com/logicencoder/useful-scripts) | private | Active scripts, `generated_proto/`, GitHub schema folder |
+| [useful-scripts-overview](https://github.com/logicencoder/useful-scripts-overview) | public | Feature map and usage notes (this repo) |

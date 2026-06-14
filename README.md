@@ -1,145 +1,88 @@
-# useful-scripts — overview
+# useful-scripts
 
-Personal Logic Encoder script toolbox: exchange monitors, protobuf tooling, and small utilities accumulated over years of crypto/dev work. Reorganized in 2026 so names and folders finally make sense.
+Personal **Logic Encoder** script toolbox — exchange monitors, MEXC protobuf helpers, and small utilities collected while building trading and monitoring stacks. Nothing here is a shipped product or WordPress plugin; these are scripts you run locally when debugging depth feeds, testing API keys, or fixing protobuf imports before wiring logic into larger apps.
 
-**Code repo (private):** [logicencoder/useful-scripts](https://github.com/logicencoder/useful-scripts)  
-**This repo:** public map of what exists and why — no API keys, no internal hosts.
+The private code lives in [logicencoder/useful-scripts](https://github.com/logicencoder/useful-scripts). This public repo is a readable map of what exists and how the pieces fit together — no API keys, no hostnames.
 
-https://logicencoder.com
+## The problem it solves
 
----
+Over years of MEXC and Gate.io work, the same prototypes kept getting copied under slightly different names — five `proto/` folders, three “final” balance monitors, dashboards that only lived on one machine. The 2026 cleanup gave every script a clear prefix (`mexc_*`, `gate_*`, `util_*`) and **one** protobuf pipeline so monitors stop breaking each other.
 
-## What this is
+## MEXC protobuf pipeline
 
-Not a product, not a framework, not something USM deploys. It is an operator’s **working drawer** of Python/bash/JS scripts that grew while building Logic Encoder trading and monitoring stacks. Think: “scripts I actually run when debugging MEXC depth, Gate orderbooks, or fixing protobuf on a laptop or SOL.”
+MEXC V3 WebSocket traffic is binary protobuf. Every monitor that reads depth or trades depends on the same two folders:
 
-After cleanup, one rule applies everywhere:
+| Folder | Role |
+|--------|------|
+| `mexc_api_schema_from_github/` | Message definitions from [mexcdevelop/websocket-proto](https://github.com/mexcdevelop/websocket-proto) |
+| `generated_proto/` | Compiled `*_pb2.py` decoders — **fixed name**; do not rename |
 
-- **GitHub API schemas** live in `mexc_api_schema_from_github/` (downloaded from MEXC’s official repo)
-- **Compiled decoders** live in `generated_proto/` (fixed folder name — monitors import from here)
-- **One loader** — `mexc_proto_loader.py` — so every monitor uses the same import path
+Run `mexc_proto_auto_setup.py` to download fresh schemas and recompile. Import through `mexc_proto_loader.py` so each script uses the same path. Use `mexc_proto_inspector.py` when imports fail after an API update.
 
----
+## MEXC and Gate.io market data
 
-## Who this is for
+**Dual exchange orderbook dashboard** (`mexc_gate_dual_orderbook_dashboard.py`, port **8017**) — FastAPI page with MEXC and Gate.io 20-level depth side by side plus an arbitrage summary panel. Handy when you want the same symbol on two CEXes without switching tabs.
 
-| Audience | Why read this |
-|----------|----------------|
-| **Future me** | Remember which script is the “real” one after six renamed copies |
-| **Logic Encoder ops** | Know what runs manually on WSL vs what was synced to SOL |
-| **Collaborators** | See scope before asking for a polished npm package |
+**MEXC depth in the terminal** — Textual TUIs for live orderbooks: `mexc_protodepth_tui_single.py` for one symbol, `mexc_protodepth_tui_multi.py` for several. Lower latency than a browser when tuning protobuf decode.
 
----
+**MEXC depth in the browser** — `mexc_protodepth_web_dashboard.py` serves a lightweight dashboard on port **8010** for local sharing during development.
 
-## MEXC + Gate.io — market data
+**Gate orderbook terminal** — `gate_orderbook_terminal.py` streams Gate.io WebSocket depth to the terminal with USD totals; Gate-only debugging without the MEXC protobuf stack.
 
-### Dual exchange orderbook dashboard
+**Trades and combined feeds** — `mexc_trades_fetcher_v3.py`, `gate_trades_fetcher.py`, and `mexc_ws_depth_and_trades.py` log trades, validate channels, and prototype asyncio loops before they land in production apps.
 
-**What:** FastAPI page showing MEXC and Gate.io 20-level depth side by side, with an arbitrage summary panel.  
-**Why:** Compare the same symbol on two CEXes without switching browser tabs.  
-**Script:** `mexc_gate_dual_orderbook_dashboard.py` — default port **8017**.
+## MEXC balance and orders
 
-### MEXC depth (terminal UIs)
+Standalone testers around private user-data WebSocket and REST flows:
 
-**What:** Textual terminal dashboards for live orderbook. Single-coin and multi-coin variants.  
-**Why:** Lower latency than a browser when tuning symbols or testing protobuf decode.  
-**Scripts:** `mexc_protodepth_tui_single.py`, `mexc_protodepth_tui_multi.py`.
+- `mexc_balance_monitor_v3.py` and `mexc_balance_monitor_v3_textual.py` — balance views (plain and Textual UI)
+- `mexc_listen_key_checker.py` — listen-key lifecycle checks
+- `mexc_ensure_single_buy_order.py` — keep a single buy order open
+- `mexc_single_immediate_buy.py` — fire an immediate buy
+- `mexc_dynamic_avgbuy.py` — dynamic average-buy math
 
-### MEXC depth (web)
+Copy `config/mexc_keys.example.json` to `config/mexc_keys.json` for scripts that need MEXC API access. Keys stay local and gitignored.
 
-**What:** Lightweight FastAPI dashboard for one symbol.  
-**Why:** Shareable local URL during development. Port **8010**.
+## Ethereum, DEX, and ops helpers
 
-### Gate orderbook (terminal)
-
-**What:** Gate.io WebSocket depth printed to the terminal with USD totals and multi-connection support for many pairs.  
-**Why:** Gate-only debugging without the MEXC protobuf stack.  
-**Script:** `gate_orderbook_terminal.py`.
-
-### Trades and combined depth+trades
-
-**What:** Fetchers and combined asyncio tools for MEXC trades, Gate trades, and MEXC depth+trades in one loop.  
-**Why:** Log to files, validate WS channels, prototype before wiring into larger apps.  
-**Scripts:** `mexc_trades_fetcher_v3.py`, `gate_trades_fetcher.py`, `mexc_ws_depth_and_trades.py`.
-
----
-
-## MEXC — balance and orders
-
-**What:** Balance monitors (plain and Textual UI), listen-key checker, helpers to keep a single buy order or fire an immediate buy, dynamic average-buy math.  
-**Why:** Private MEXC user-data WebSocket and REST need quick standalone testers outside `mexc_trading_app`.  
-**Scripts:** `mexc_balance_monitor_v3.py`, `mexc_balance_monitor_v3_textual.py`, `mexc_listen_key_checker.py`, `mexc_ensure_single_buy_order.py`, `mexc_single_immediate_buy.py`, `mexc_dynamic_avgbuy.py`.
-
----
-
-## MEXC API files from GitHub
-
-**What:** Two folders — schemas downloaded from GitHub, Python modules compiled from them.  
-**Why:** MEXC V3 WebSocket is protobuf; you need one canonical copy instead of five scattered `proto/` directories (the old “bordelik”).  
-
-| Folder | Plain English |
-|--------|----------------|
-| `mexc_api_schema_from_github/` | Official message definitions from [mexcdevelop/websocket-proto](https://github.com/mexcdevelop/websocket-proto) |
-| `generated_proto/` | Compiled `*_pb2.py` — **do not rename**; all monitors depend on it |
-
-**Setup:** `mexc_proto_auto_setup.py` downloads and compiles. **Inspect:** `mexc_proto_inspector.py`. **Load in code:** `mexc_proto_loader.py`.
-
----
-
-## Ethereum, DEX, infra helpers
-
-**What:** Local Geth gas WS checker, DEX liquidity pool monitor, firewall port script, Samba setup, tmux logger, process killer for stale tunnel scripts, Windows audio restart bat.  
-**Why:** One-off ops tasks around the same machines that run trading stacks.  
-**Examples:** `eth_gas_price_checker_ws.py`, `dex_liquidity_pool_monitor.py`, `open_firewall_port.sh`.
-
----
+One-off scripts around the same machines that run trading stacks: `eth_gas_price_checker_ws.py` (local Geth gas over WebSocket), `dex_liquidity_pool_monitor.py`, `open_firewall_port.sh`, `samba_setup.sh`, `tmux_mexc_dnx_logger.sh`, `kill_mexc_ticker_tunnel_processes.sh`, and similar small ops tools.
 
 ## Generic utilities (`util_*`)
 
-**What:** CLI input, Flask client info sender, token decimals, colored logs, terminal title, Textual button demo, graceful shutdown, site indexing check, MP4→GIF, network card speed.  
-**Why:** Copy-paste starting points for other projects — kept here so they do not multiply across repos.
-
----
+Reusable snippets — CLI input helpers, Flask client info, token decimals, colored logs, terminal title, Textual button demo, graceful shutdown, site indexing check, MP4→GIF, network card speed. Kept here so they do not multiply across repos.
 
 ## Discord experiments
 
-**What:** Two Node scripts for discord.js reply grouping experiments.  
-**Folder:** `discord/` — not production Discord bots.
+The `discord/` folder holds two Node scripts for discord.js reply-grouping experiments — not production bots.
 
----
-
-## How it is run
+## Quick start
 
 ```bash
-cd ~/useful_scripts   # WSL
-# or /home/sol/lojzo/useful_scripts on SOL
+git clone  # private repo — see REPOS.md
+cd useful_scripts
 
 python3 mexc_proto_auto_setup.py          # refresh GitHub schemas + generated_proto
 python3 mexc_gate_dual_orderbook_dashboard.py
 ```
 
-Copy `config/mexc_keys.example.json` → `config/mexc_keys.json` for scripts that need MEXC API access. Keys stay local and gitignored.
+## Related Logic Encoder repos
 
----
-
-## Relationship to other Logic Encoder repos
-
-| Repo | Difference |
-|------|------------|
-| `cex_dex_arb_app` | Full CEX/DEX arb product with its own `generated_proto/` |
-| `mexc_trading_app` | Production trading stack on SOL |
+| Repo | How it differs |
+|------|----------------|
+| [cex_dex_arb_app](https://github.com/logicencoder/cex_dex_arb_app) | Full CEX/DEX arb product with its own protobuf copy |
+| [mexc_trading_app](https://github.com/logicencoder/mexc_trading_app) | Production trading stack |
 | **useful-scripts** | Personal toolbox — prototypes, monitors, protobuf fixes |
 
-Same protobuf *idea* appears in multiple repos; **useful-scripts** is the cleaned canonical copy for standalone scripts only.
-
----
+The same protobuf *idea* appears in multiple repos; **useful-scripts** is the cleaned canonical copy for standalone scripts only.
 
 ## Changelog (high level)
 
 | Date | Change |
 |------|--------|
-| 2026-06 | Renamed scripts (`mexc_*`, `gate_*`, `util_*`), merged duplicate protos, `mexc_api_schema_from_github/` + single `generated_proto/`, synced WSL↔SOL, GitHub publish, removed legacy archive copies |
+| 2026-06 | Renamed scripts, merged duplicate protos, single `generated_proto/`, GitHub publish |
+
+See [REPOS.md](REPOS.md) for the public/private repo pair.
 
 ---
 
-Logic Encoder — https://logicencoder.com
+**Made by [Logic Encoder](https://logicencoder.com)** · [GitHub](https://github.com/logicencoder) · [Contact](https://logicencoder.com/contact/)
